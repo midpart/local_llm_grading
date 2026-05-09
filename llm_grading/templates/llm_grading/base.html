@@ -1,0 +1,95 @@
+{% load django_bootstrap5 %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}My Django Site{% endblock %}</title>
+
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body class="bg-light">
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'index' %}">Local LLM Grading</a>
+
+      <!-- Toggler for mobile view -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <!-- Right side menu -->
+        <ul class="navbar-nav ms-auto">
+          {% if user.is_authenticated %}
+          <!-- Simulation parent dropdown -->
+          <!-- <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="simulationsDropdown" role="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              Simulation Competition
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="marketDropdown">
+              <li><a class="dropdown-item" href="">Manage</a></li>
+              <li><a class="dropdown-item" href="">Add More</a></li>
+            </ul>
+          </li> -->
+
+          <!-- Students parent dropdown -->
+          <!-- <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="studentsDropdown" role="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              Upload & Report
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="studentsDropdown">
+              <li><a class="dropdown-item" href="">Upload Student</a></li>
+              <li><a class="dropdown-item" href="">Upload Student Scores</a></li>
+              <li><a class="dropdown-item" href="">Upload Team</a></li>
+              <li><a class="dropdown-item" href="">Upload Simulation2 Survey</a></li>
+              <li><a class="dropdown-item" href="">Upload Simulation3 Survey</a></li>
+              <li><a class="dropdown-item" href="">Upload Student Exam Grade</a></li>
+              <li><a class="dropdown-item" href="">Score Report</a></li>
+              <li><a class="dropdown-item" href="">Team Member Report</a></li>
+              <li><a class="dropdown-item" href="">Download Special Reort</a></li>
+              <li><a class="dropdown-item" href="">All Data Report</a></li>
+            </ul>
+          </li> -->
+
+          <!-- Logout button -->
+          <li class="nav-item">
+            <form method="post" action="{% url 'logout' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="nav-link btn btn-link">Logout</button>
+            </form>
+          </li>
+
+          <li class="nav-item">
+            <a class="btn btn-outline-light" href="{% url 'admin:index' %}" target="_blank">Go to Admin</a>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a href="{% url 'login' %}" class="btn btn-outline-light">Login</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+
+
+  <main class="container mt-4">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+{% block script %}
+{% endblock %}
+</html>

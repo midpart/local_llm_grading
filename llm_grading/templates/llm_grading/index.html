@@ -1,0 +1,56 @@
+{% extends "llm_grading/base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+  <div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
+    <h1 class="display-5 fw-bold">Welcome to local LLM grading system</h1>
+    <p class="col-md-8 fs-5">
+      This website is for grading student's answer using local LLM.
+    </p>
+  </div>
+
+<div class="row">
+  <div class="col-sm-3 mb-3 mb-sm-0">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Active Academic Year</h5>
+      </div>
+    </div>
+  </div><div class="col-sm-3 mb-3 mb-sm-0">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Students</h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Simulations</h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Markets</h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Teams</h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3 p-3">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Reports</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
