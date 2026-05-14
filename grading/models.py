@@ -15,6 +15,7 @@ class StudentAnswer(models.Model):
     llm_end_time = models.FloatField(null=True)
     llm_response_in_sec = models.FloatField(null=True)
     llm_response_raw =  models.TextField(null=True)
+    llm_has_response =  models.BooleanField(null=True)
 
     def __str__(self):
         return f"{self.student_name} - {self.question_serial}"
@@ -25,8 +26,8 @@ class StudentAnswer(models.Model):
 class StudentGrade(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.RESTRICT, related_name='student_grade', null=False)
     student_name = models.CharField(max_length=255)
-    total_point =  models.FloatField()
-    grade =  models.IntegerField()
+    total_point =  models.FloatField(null=True)
+    grade =  models.IntegerField(null=True)
 
     def __str__(self):
         return f"{self.student_name} - {self.grade}"

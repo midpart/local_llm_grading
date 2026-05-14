@@ -31,17 +31,16 @@
         <!-- Right side menu -->
         <ul class="navbar-nav ms-auto">
           {% if user.is_authenticated %}
-          <!-- Simulation parent dropdown -->
-          <!-- <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="simulationsDropdown" role="button"
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="uploadFileDropdown" role="button"
               data-bs-toggle="dropdown" aria-expanded="false">
-              Simulation Competition
+              Upload Files
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="marketDropdown">
-              <li><a class="dropdown-item" href="">Manage</a></li>
-              <li><a class="dropdown-item" href="">Add More</a></li>
+              <li><a class="dropdown-item" href="{% url 'exams:uploadExam' %}">Upload Exams</a></li>
+              <li><a class="dropdown-item" href="{% url 'grading:uploadStudentAnswers' %}">Grade Student Answers</a></li>
             </ul>
-          </li> -->
+          </li>
 
           <!-- Students parent dropdown -->
           <!-- <li class="nav-item dropdown">
