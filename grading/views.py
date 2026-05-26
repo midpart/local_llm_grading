@@ -475,7 +475,13 @@ def process_student_answer_files(request):
                                                                 ], batch_size=100)
                     if len(remove_student_answer_details_db_list) > 0:
                         print(f'Delete inside {len(remove_student_answer_details_db_list)}')
-                        remove_student_answer_details_db_list.delete()
+                        StudentAnswerDetails.objects.filter(
+                            id__in=[
+                                x.id
+                                for x in remove_student_answer_details_db_list
+                                if x.id is not None
+                            ]
+                        ).delete()
             
             message = "Operation is successful."
             success = True
