@@ -43,7 +43,7 @@ def get_exam_question_dto(exam_obj, exam_details, exam_questions):
 
     return dto_list
 
-def get_exam_details_context(examQuestionDto, student_answer):
+def get_exam_details_context_v1(examQuestionDto, student_answer):
     context = ""
     if examQuestionDto is not None:
         context = f"""
@@ -107,6 +107,139 @@ Start with {{ and end with }}.
              
     return context
 
+def get_exam_details_context(examQuestionDto, student_answer):
+    context = ""
+
+    if examQuestionDto is not None:
+
+        context = f"""
+You are a STRICT and CONSISTENT grading engine.
+
+You do NOT behave like a chatbot.
+You ONLY output valid structured JSON.
+
+You must evaluate student answers fairly and objectively.
+
+"""
+
+        # Additional context
+        if len(examQuestionDto.details) > 0:
+            context += """
+CONTEXT (internal reference only):
+"""
+
+            for detail in examQuestionDto.details:
+                context += f"""
+{detail.title.upper()}
+{detail.details}
+
+"""
+
+        context += f"""
+QUESTION:
+{examQuestionDto.question}
+
+REFERENCE ANSWER (internal reference only):
+{examQuestionDto.sample_answer}
+
+STUDENT ANSWER:
+{student_answer}
+--------------------------------------------------
+SCORING RULES (MUST FOLLOW EXACTLY)
+
+1. question_point = {examQuestionDto.points} (fixed)
+2. student_point must be between 0 and {examQuestionDto.points}
+3. total rubric score MUST equal student_point
+4. student_point MUST NEVER exceed {examQuestionDto.points}
+5. bonus_points = 0 (always)
+6. feedback must be a short concise string
+7. Be consistent and objective.
+8. Do NOT score based on writing style, grammar, spelling, or answer length.
+9. Evaluate actual understanding, correctness, reasoning, and relevance.
+
+--------------------------------------------------
+RUBRIC GUIDELINES
+
+RUBRIC AREAS:
+- UNDERSTANDING: 0 to {(.4*examQuestionDto.points)}
+- APPLICATION: 0 to {(.4*examQuestionDto.points)}
+- CRITICAL THINKING: 0 to {(.2*examQuestionDto.points)}
+
+Use the provided grading guideline as the PRIMARY evaluation reference.
+
+IMPORTANT RULES:
+
+- The grading guideline is a GUIDE, not a strict answer template.
+- Do NOT depend only on exact wording from the reference answer.
+- Students may use different valid approaches.
+- Students may explain concepts differently.
+- Reward logically correct and meaningful reasoning.
+- Alternative valid thinking should receive fair marks.
+- Penalize only:
+    - factual inaccuracies
+    - contradictions
+    - irrelevant answers
+    - missing understanding
+    - unsupported claims
+
+--------------------------------------------------
+DYNAMIC RUBRIC RULES
+
+- Rubric entries may be generated dynamically based on:
+    - the grading guideline
+    - the question requirements
+    - the student's answer
+
+- If a rubric entry is derived from, aligned with,
+  or directly related to the grading guideline categories:
+    - "is_from_guideline": true
+
+- If a rubric entry represents a NEW evaluation category
+  introduced from the student's answer that is NOT covered
+  by the grading guideline:
+    - "is_from_guideline": false
+
+- Additional rubric entries MUST NOT increase the maximum total score.
+
+- Total rubric score MUST equal student_point.
+
+- student_point MUST NEVER exceed {examQuestionDto.points}
+
+--------------------------------------------------
+OUTPUT FORMAT (STRICT JSON ONLY)
+
+{{
+  "question_point": {examQuestionDto.points},
+
+  "rubric": {{
+    "RUBRIC_TITLE": {{
+      "score": number,
+      "max": number,
+      "is_from_guideline": true
+    }}
+  }},
+
+  "student_point": number,
+  "criteria_summary": "short summary string",
+  "bonus_points": 0,
+  "feedback": "short feedback string"
+}}
+
+IMPORTANT:
+- Return ONLY valid JSON
+- No markdown
+- No explanation
+- No extra text
+- Start with {{
+- End with }}
+- total rubric score MUST equal student_point
+- student_point MUST NEVER exceed {examQuestionDto.points}
+
+"""
+
+    return context
+
+
 def request_llm(prompt, llm_model):
 
     response = ollama.chat(
@@ -129,7 +262,17 @@ def request_llm(prompt, llm_model):
             "num_predict": 350
         }
     )
-    return response["message"]["content"].strip()
+
+    return {
+        "content": response["message"]["content"].strip(),
+        "input_tokens": response.get("prompt_eval_count", 0),
+        "output_tokens": response.get("eval_count", 0),
+        "total_duration": response.get("total_duration", 0),
+        "prompt_eval_duration": response.get("prompt_eval_duration", 0),
+        "eval_duration": response.get("eval_duration", 0),
+    }
+
+    #return response["message"]["content"].strip()
 
 def parse_json_safe(text):
     try:
@@ -179,6 +322,7 @@ def process_student_answer_files(request):
                 raise ValueError(f"{llm_model} is not in the Ollama model lists")
             
             all_db_student_answer = StudentAnswer.objects.filter(exam_id = exam_id)
+            all_db_student_answer_details = StudentAnswerDetails.objects.filter(exam_id = exam_id)
             all_db_student_grade = StudentGrade.objects.filter(exam__id = exam_id)
             exam_details = ExamDetails.objects.filter(exam__id = exam_id)
             exam_questions = ExamQuestionAnswer.objects.filter(exam__id = exam_id)
@@ -187,6 +331,10 @@ def process_student_answer_files(request):
             for excel_file in excel_files:
                 add_student_answer_db_list = []
                 update_student_answer_db_list = []
+
+                add_student_answer_details_db_list = []
+                update_student_answer_details_db_list = []
+                remove_student_answer_details_db_list = []
 
                 add_student_grade_db_list = []
                 update_student_grade_db_list = []
@@ -227,7 +375,12 @@ def process_student_answer_files(request):
                     temp_studentAnswer.llm_model = llm_model
 
                     start_time = time.time()
-                    temp_llm_result = request_llm(temp_context, temp_studentAnswer.llm_model)
+                    #temp_llm_result = request_llm(temp_context, temp_studentAnswer.llm_model)
+                    temp_llm_response = request_llm(temp_context, temp_studentAnswer.llm_model)
+                    temp_llm_result = temp_llm_response["content"]
+
+                    print(f"Done for : {temp_file_name} SL. {question_serial}")
+
                     end_time = time.time()
                     elapsed = end_time - start_time
                     temp_data = parse_json_safe(temp_llm_result)
@@ -243,11 +396,45 @@ def process_student_answer_files(request):
                 
                     temp_studentAnswer.llm_feedback = temp_data.get("feedback", "")
                     temp_studentAnswer.llm_score_points = temp_data.get("student_point", 0)
+                    temp_studentAnswer.llm_input_token= temp_llm_response["input_tokens"]
+                    temp_studentAnswer.llm_output_tokens= temp_llm_response["output_tokens"]
+                    temp_studentAnswer.llm_response_total_duration_sec= temp_llm_response["total_duration"] / 1_000_000_000
+                    temp_studentAnswer.llm_response_prompt_eval_duration_sec= temp_llm_response["prompt_eval_duration"] / 1_000_000_000
+                    temp_studentAnswer.llm_response_eval_duration_sec= temp_llm_response["eval_duration"] / 1_000_000_000
+
+                    rubric_data = temp_data.get("rubric", {})
+                    temp_studentAnswerDetails = all_db_student_answer_details.filter(student_answer__id=temp_studentAnswer.id) if all_db_student_answer_details is not None else None
+                    temp_title_list = []
+                    print(f'detailsdb Items {len(temp_studentAnswerDetails)}')
+                    for rubric_title, rubric_value in rubric_data.items():    
+                        temp_details = temp_studentAnswerDetails.filter(title=rubric_title).first() if temp_studentAnswerDetails is not None else None
+                        if temp_details is None:
+                            temp_details = StudentAnswerDetails(
+                                exam = exam_obj,
+                                student_answer = temp_studentAnswer,
+                                title = rubric_title
+                            )
+                            add_student_answer_details_db_list.append(temp_details)
+                        else: 
+                            update_student_answer_details_db_list.append(temp_details)
+
+                        temp_details.score = rubric_value.get("score", 0)
+                        temp_details.max_score = rubric_value.get("max", 0)
+                        temp_details.is_from_guideline = rubric_value.get("is_from_guideline", True)
+                        temp_title_list.append(rubric_title)
+
+                    temp_remove_student_answer_details_db_list = temp_studentAnswerDetails.exclude(title__in=temp_title_list) if temp_studentAnswerDetails is not None else []
+                    for remove in temp_remove_student_answer_details_db_list:
+                        remove_student_answer_details_db_list.append(remove)
+                    print(f'Delete {len(remove_student_answer_details_db_list)}')
+                    print(f'detailsdb add Items {len(add_student_answer_details_db_list)}')
+                    print(f'detailsdb add Items {len(update_student_answer_details_db_list)}')
                     temp_studentAnswer.llm_has_response = True
                     if temp_studentGrade.total_point is None:
                         temp_studentGrade.total_point = 0
                     temp_studentGrade.total_point +=temp_studentAnswer.llm_score_points
-            
+                
+                    temp_studentAnswer.llm_used_alternative_approach= any(not x.get("is_from_guideline", True) for x in rubric_data.values())
                 if temp_studentGrade.total_point is not None:
                     temp_studentGrade.grade = get_grade(temp_studentGrade.total_point)
 
@@ -264,6 +451,7 @@ def process_student_answer_files(request):
                     if len(update_student_answer_db_list) > 0:
                         StudentAnswer.objects.bulk_update(update_student_answer_db_list, ["answer"
                                                                 , "llm_score_points"
+                                                                , "llm_used_alternative_approach"
                                                                 , "llm_model"
                                                                 , "llm_feedback"
                                                                 , "llm_start_time"
@@ -271,7 +459,23 @@ def process_student_answer_files(request):
                                                                 , "llm_response_in_sec"
                                                                 , "llm_response_raw"
                                                                 , "llm_has_response"
+                                                                , "llm_input_token"
+                                                                , "llm_output_tokens"
+                                                                , "llm_response_total_duration_sec"
+                                                                , "llm_response_prompt_eval_duration_sec"
+                                                                , "llm_response_eval_duration_sec"
                                                                 ], batch_size=100)
+
+                    if len(add_student_answer_details_db_list) > 0:
+                        StudentAnswerDetails.objects.bulk_create(add_student_answer_details_db_list, batch_size=100)
+                    if len(update_student_answer_details_db_list) > 0:
+                        StudentAnswerDetails.objects.bulk_update(update_student_answer_details_db_list, ["score"
+                                                                , "max_score"
+                                                                , "is_from_guideline"
+                                                                ], batch_size=100)
+                    if len(remove_student_answer_details_db_list) > 0:
+                        print(f'Delete inside {len(remove_student_answer_details_db_list)}')
+                        remove_student_answer_details_db_list.delete()
             
             message = "Operation is successful."
             success = True

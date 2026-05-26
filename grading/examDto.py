@@ -15,3 +15,19 @@ class ExamQuestionDTO:
     sample_answer: str
 
     details: List[ExamDetailsDTO] = field(default_factory=list)
+
+@dataclass
+class StudentGradeDTO:
+    exam_id: int 
+    exam_name: str
+    exam_code: str 
+    exam_full_points: int 
+    academic_year: int
+    total_question: int
+    student_name: str  
+    student_total_point: float
+    student_grade: int
+    student_total_answer: int
+    student_total_processed_answer: int
+    llm_model: str
+    is_llm_processed: bool

@@ -9,6 +9,7 @@ class StudentAnswer(models.Model):
     answer =  models.TextField()
 
     llm_score_points =  models.FloatField(null=True)
+    llm_used_alternative_approach = models.BooleanField(null=True)
     llm_model = models.CharField(max_length=600, null=True, blank=True)
     llm_feedback =  models.TextField(null=True)
     llm_start_time = models.FloatField(null=True)
@@ -16,12 +17,32 @@ class StudentAnswer(models.Model):
     llm_response_in_sec = models.FloatField(null=True)
     llm_response_raw =  models.TextField(null=True)
     llm_has_response =  models.BooleanField(null=True)
+    llm_input_token = models.IntegerField(null=True)
+    llm_output_tokens = models.IntegerField(null=True)
+    llm_response_total_duration_sec = models.FloatField(null=True)
+    llm_response_prompt_eval_duration_sec = models.FloatField(null=True)
+    llm_response_eval_duration_sec = models.FloatField(null=True)
 
     def __str__(self):
         return f"{self.student_name} - {self.question_serial}"
     
     class Meta:
         verbose_name_plural = "1. StudentAnswers"
+
+class StudentAnswerDetails(models.Model):
+    exam = models.ForeignKey(Exam, on_delete=models.RESTRICT, related_name='student_answer_details_exam', null=False)
+    student_answer = models.ForeignKey(StudentAnswer, on_delete=models.RESTRICT, related_name='student_answer_details_answer', null=False)
+
+    title = models.CharField(max_length=600)
+    score = models.FloatField(null=False)
+    max_score = models.FloatField(null=False)
+    is_from_guideline = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.score}"
+    
+    class Meta:
+        verbose_name_plural = "2. StudentAnswerDetails"
 
 class StudentGrade(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.RESTRICT, related_name='student_grade', null=False)
@@ -33,4 +54,4 @@ class StudentGrade(models.Model):
         return f"{self.student_name} - {self.grade}"
     
     class Meta:
-        verbose_name_plural = "2. StudentGrade"
+        verbose_name_plural = "3. StudentGrade"
