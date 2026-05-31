@@ -351,6 +351,8 @@ def process_student_answer_files(request):
                     add_student_grade_db_list.append(temp_studentGrade)
                 else:
                     update_student_grade_db_list.append(temp_studentGrade)
+                temp_studentGrade.grade = 0 
+                temp_studentGrade.total_point = 0 
 
                 for index, row in df_file.iterrows(): 
                     question_serial = row["question_serials"]
@@ -426,9 +428,6 @@ def process_student_answer_files(request):
                     temp_remove_student_answer_details_db_list = temp_studentAnswerDetails.exclude(title__in=temp_title_list) if temp_studentAnswerDetails is not None else []
                     for remove in temp_remove_student_answer_details_db_list:
                         remove_student_answer_details_db_list.append(remove)
-                    print(f'Delete {len(remove_student_answer_details_db_list)}')
-                    print(f'detailsdb add Items {len(add_student_answer_details_db_list)}')
-                    print(f'detailsdb add Items {len(update_student_answer_details_db_list)}')
                     temp_studentAnswer.llm_has_response = True
                     if temp_studentGrade.total_point is None:
                         temp_studentGrade.total_point = 0
@@ -474,7 +473,6 @@ def process_student_answer_files(request):
                                                                 , "is_from_guideline"
                                                                 ], batch_size=100)
                     if len(remove_student_answer_details_db_list) > 0:
-                        print(f'Delete inside {len(remove_student_answer_details_db_list)}')
                         StudentAnswerDetails.objects.filter(
                             id__in=[
                                 x.id

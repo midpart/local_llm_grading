@@ -45,7 +45,7 @@ def get_all_ollama_llm_model():
     return model_names
 
 
-def get_student_grade_report():
+def get_student_grade_report(exam_ids):
 
     sql = """
 SELECT 
@@ -85,9 +85,19 @@ LEFT JOIN (
 ) AS stuA ON stuA.exam_id = sg.exam_id AND stuA.student_name = sg.student_name 
 """
     params = []
+    filter_query = []
+
+    if exam_ids is not None and len(exam_ids) > 0:
+        selected_exam_ids = [int(c) for c in exam_ids if c.isdigit()]
+        if len(selected_exam_ids) > 0:
+            id_list = ', '.join(str(c) for c in selected_exam_ids)
+            filter_query.append(f"AND sg.exam_id IN ({id_list})")
+
     where_sql = "WHERE 1 = 1 "
+    if len(filter_query) > 0:
+        where_sql += " \n ".join(filter_query)
     sql += where_sql
-    sql += " \n ORDER BY sg.exam_id, student_grade DESC"
+    sql += " \n ORDER BY sg.exam_id, sg.student_name  ASC"
     # execute safely
     with connection.cursor() as cursor:
         #print(cursor.mogrify(sql, params))
@@ -105,3 +115,8 @@ def dictfetchall(cursor):
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
+
+def get_true_false(value):
+    if value is None: 
+        return None
+    return 1 if value == True else 0

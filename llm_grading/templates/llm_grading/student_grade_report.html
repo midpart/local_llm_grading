@@ -15,6 +15,37 @@
         {% endif %}
     </div>
 
+    <div class="container my-3">
+        <button class="btn btn-primary mb-2" type="button" id="filterToggleBtn" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="true" aria-controls="filterPanel">
+            Show Filters
+        </button>
+
+        <div class="collapse show" id="filterPanel">
+            <div class="card card-body">
+            <form method="get" action="" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label for="exam_ids" class="form-label">Exam</label>
+                        <select class="form-select" name="exam_ids" id="exam_ids">
+                            <option value="">All</option>
+                            {% if exam_list %}
+                                {% for exam in exam_list %}
+                                    <option value="{{exam.id}}" {% if exam.id|stringformat:"s" in exam_ids %}selected{% endif %}>{{exam.name}} - {{exam.academic_year}}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success me-2">Apply Filters</button>
+                        <a href="?" class="btn btn-secondary me-2">Reset</a>
+                        <button type="button" id="exportBtn" class="btn btn-primary me-2">Export</button>
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
     <!-- <p>Total Data: {{ total_rows }} {% if total_rows > 0 %}<a href="" class="btn btn-primary">Export</a>{% endif %}</p> -->
     <!-- Table -->
     <div class="table-responsive">
@@ -97,8 +128,32 @@
 
 
 {% block script %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function () {
+         $('#exam_ids').select2({
+            placeholder: "Select exam",
+            allowClear: true
+        });
+        var $filterPanel = $('#filterPanel');
+        var $toggleBtn = $('#filterToggleBtn');
+
+        // Bootstrap 5 collapse events
+        $filterPanel.on('show.bs.collapse', function () {
+            $toggleBtn.text('Hide Filters');
+        });
+
+        $filterPanel.on('hide.bs.collapse', function () {
+            $toggleBtn.text('Show Filters');
+        });
+
+        // Initial text based on panel state
+        if ($filterPanel.hasClass('show')) {
+            $toggleBtn.text('Hide Filters');
+        } else {
+            $toggleBtn.text('Show Filters');
+        }
 
 
         $("#exportBtn").click(function() {
@@ -108,7 +163,7 @@
             var originalAction = $form.attr("action") || "";
 
             // Change form action to Excel export URL
-            $form.attr("action", "");
+            $form.attr("action", "{% url 'studentGradeReportXlx' %}");
 
             // Submit the form
             $form.submit();
