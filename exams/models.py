@@ -35,6 +35,7 @@ class ExamQuestionAnswer(models.Model):
     points = models.IntegerField()
     question =  models.TextField()
     sample_answer =  models.TextField()
+    grading_guideline = models.TextField(null=True)
 
     def __str__(self):
         return f"{self.question_serial}. {self.question}"

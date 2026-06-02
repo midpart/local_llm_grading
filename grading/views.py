@@ -30,6 +30,7 @@ def get_exam_question_dto(exam_obj, exam_details, exam_questions):
             points = exam_question.points,
             question = exam_question.question,
             sample_answer = exam_question.sample_answer,
+            grading_guideline = exam_question.grading_guideline,
             details = []
         )
         for exam_detail in exam_details:
@@ -107,7 +108,7 @@ Start with {{ and end with }}.
              
     return context
 
-def get_exam_details_context(examQuestionDto, student_answer):
+def get_exam_details_context_v2(examQuestionDto, student_answer):
     context = ""
 
     if examQuestionDto is not None:
@@ -239,6 +240,145 @@ IMPORTANT:
 
     return context
 
+def get_exam_details_context(examQuestionDto, student_answer):
+    context = ""
+
+    grading_guideline = get_grading_guideline(examQuestionDto.grading_guideline, examQuestionDto.points)
+    if examQuestionDto is not None:
+
+        context = f"""
+You are a STRICT and CONSISTENT grading engine.
+
+You do NOT behave like a chatbot.
+You ONLY output valid structured JSON.
+
+You must evaluate student answers fairly and objectively.
+
+"""
+
+        # Additional context
+        if len(examQuestionDto.details) > 0:
+            context += """
+CONTEXT (internal reference only):
+"""
+
+            for detail in examQuestionDto.details:
+                context += f"""
+{detail.title.upper()}
+{detail.details}
+
+"""
+
+        context += f"""
+QUESTION:
+{examQuestionDto.question}
+
+REFERENCE ANSWER (internal reference only):
+{examQuestionDto.sample_answer}
+
+STUDENT ANSWER:
+{student_answer}
+--------------------------------------------------
+SCORING RULES (MUST FOLLOW EXACTLY)
+
+1. question_point = {examQuestionDto.points} (fixed)
+2. student_point must be between 0 and {examQuestionDto.points}
+3. total rubric score MUST equal student_point
+4. student_point MUST NEVER exceed {examQuestionDto.points}
+5. bonus_points = 0 (always)
+6. feedback must be a short concise string
+7. Be consistent and objective.
+8. Do NOT score based on writing style, grammar, spelling, or answer length.
+9. Evaluate actual understanding, correctness, reasoning, and relevance.
+
+--------------------------------------------------
+RUBRIC GUIDELINES
+
+{grading_guideline}
+
+IMPORTANT RULES:
+
+- The grading guideline is a GUIDE, not a strict answer template.
+- Do NOT depend only on exact wording from the reference answer.
+- Students may use different valid approaches.
+- Students may explain concepts differently.
+- Reward logically correct and meaningful reasoning.
+- Alternative valid thinking should receive fair marks.
+- Penalize only:
+    - factual inaccuracies
+    - contradictions
+    - irrelevant answers
+    - missing understanding
+    - unsupported claims
+
+--------------------------------------------------
+DYNAMIC RUBRIC RULES
+
+- Rubric entries may be generated dynamically based on:
+    - the grading guideline
+    - the question requirements
+    - the student's answer
+
+- If a rubric entry is derived from, aligned with,
+  or directly related to the grading guideline categories:
+    - "is_from_guideline": true
+
+- If a rubric entry represents a NEW evaluation category
+  introduced from the student's answer that is NOT covered
+  by the grading guideline:
+    - "is_from_guideline": false
+
+- Additional rubric entries MUST NOT increase the maximum total score.
+
+- Total rubric score MUST equal student_point.
+
+- student_point MUST NEVER exceed {examQuestionDto.points}
+
+--------------------------------------------------
+OUTPUT FORMAT (STRICT JSON ONLY)
+
+{{
+  "question_point": {examQuestionDto.points},
+
+  "rubric": {{
+    "RUBRIC_TITLE": {{
+      "score": number,
+      "max": number,
+      "is_from_guideline": true
+    }}
+  }},
+
+  "student_point": number,
+  "criteria_summary": "short summary string",
+  "bonus_points": 0,
+  "feedback": "short feedback string"
+}}
+
+IMPORTANT:
+- Return ONLY valid JSON
+- No markdown
+- No explanation
+- No extra text
+- Start with {{
+- End with }}
+- total rubric score MUST equal student_point
+- student_point MUST NEVER exceed {examQuestionDto.points}
+
+"""
+
+    return context
+
+def get_grading_guideline(question_grading_guideline, question_points):
+    if question_grading_guideline is None or len(question_grading_guideline) <=0:
+        question_grading_guideline = f'''
+RUBRIC AREAS:
+- UNDERSTANDING: 0 to {(.4*question_points)}
+- APPLICATION: 0 to {(.4*question_points)}
+- CRITICAL THINKING: 0 to {(.2*question_points)}
+
+Use the provided grading guideline as the PRIMARY evaluation reference.
+'''
+    return question_grading_guideline
 
 def request_llm(prompt, llm_model):
 
@@ -396,6 +536,7 @@ def process_student_answer_files(request):
                         temp_studentAnswer.llm_has_response = False
                         continue
                 
+                    temp_studentAnswer.llm_context_raw = temp_context
                     temp_studentAnswer.llm_feedback = temp_data.get("feedback", "")
                     temp_studentAnswer.llm_score_points = temp_data.get("student_point", 0)
                     temp_studentAnswer.llm_input_token= temp_llm_response["input_tokens"]
@@ -463,6 +604,7 @@ def process_student_answer_files(request):
                                                                 , "llm_response_total_duration_sec"
                                                                 , "llm_response_prompt_eval_duration_sec"
                                                                 , "llm_response_eval_duration_sec"
+                                                                , "llm_context_raw"
                                                                 ], batch_size=100)
 
                     if len(add_student_answer_details_db_list) > 0:

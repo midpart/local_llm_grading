@@ -22,6 +22,7 @@ class StudentAnswer(models.Model):
     llm_response_total_duration_sec = models.FloatField(null=True)
     llm_response_prompt_eval_duration_sec = models.FloatField(null=True)
     llm_response_eval_duration_sec = models.FloatField(null=True)
+    llm_context_raw =  models.TextField(null=True)
 
     def __str__(self):
         return f"{self.student_name} - {self.question_serial}"

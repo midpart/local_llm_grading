@@ -50,10 +50,10 @@ def get_filter(request):
 @login_required(login_url='login')
 def student_grade_report_xlx(request):
     # Get your filtered data
-    exam_ids = request.GET.getlist("exam_ids", None)
+    exam_ids =  [x for x in request.GET.getlist("exam_ids") if x]#request.GET.getlist("exam_ids", None)
     exam_List = None
     if exam_ids is None or len(exam_ids) <= 0:
-        exam_List = Exam.objects()
+        exam_List = Exam.objects.all()
     else: 
         exam_List = Exam.objects.filter(id__in = exam_ids)
     

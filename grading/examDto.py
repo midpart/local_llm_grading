@@ -13,6 +13,7 @@ class ExamQuestionDTO:
     points: int
     question: str
     sample_answer: str
+    grading_guideline: str
 
     details: List[ExamDetailsDTO] = field(default_factory=list)
 

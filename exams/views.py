@@ -112,6 +112,7 @@ def process_exam_file(request):
                 temp_question.points = row["points"]
                 temp_question.question = row["question"]
                 temp_question.sample_answer = row["sample_answer"]
+                temp_question.grading_guideline = row["grading_guideline"] 
 
                 if is_new_question:
                     add_question_db_list.append(temp_question)
@@ -141,6 +142,7 @@ def process_exam_file(request):
                     ExamQuestionAnswer.objects.bulk_update(update_question_db_list, ["points"
                                                           , "question"
                                                           , "sample_answer"
+                                                          , "grading_guideline"
                                                           ], batch_size=100)
                 if len(remove_question_db_list) > 0:
                     remove_question_db_list.delete()
