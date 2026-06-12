@@ -354,15 +354,34 @@ OUTPUT FORMAT (STRICT JSON ONLY)
   "feedback": "short feedback string"
 }}
 
-IMPORTANT:
-- Return ONLY valid JSON
-- No markdown
-- No explanation
-- No extra text
-- Start with {{
-- End with }}
+CRITICAL INSTRUCTIONS
+
+You are a JSON generator.
+
+Your entire response MUST be a single valid JSON object.
+
+DO NOT:
+- Write explanations
+- Write notes
+- Write introductions
+- Write conclusions
+- Write markdown
+- Write code fences
+- Write "Here is the JSON"
+- Write any text before {{
+- Write any text after }}
+
+The first character of your response MUST be {{
+The last character of your response MUST be }}
+
+If you cannot comply, return:
+
+{{"error":"invalid"}}
+
+Additional requirements:
 - total rubric score MUST equal student_point
 - student_point MUST NEVER exceed {examQuestionDto.points}
+- Response must be parseable by JSON.parse()
 
 """
 
