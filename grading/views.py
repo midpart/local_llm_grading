@@ -335,6 +335,30 @@ DYNAMIC RUBRIC RULES
 - student_point MUST NEVER exceed {examQuestionDto.points}
 
 --------------------------------------------------
+VALIDATION RULES (MUST PASS BEFORE RETURNING)
+
+Before generating the final JSON:
+
+1. Every rubric item must satisfy:
+   0 <= score <= max
+2. Sum all rubric scores:
+   rubric_total = sum(all rubric scores)
+3. Set:
+   student_point = rubric_total
+4. Verify:
+   student_point <= question_point
+5. Verify:
+   rubric_total == student_point
+6. Verify:
+   no rubric item score exceeds its max
+7. Verify:
+   question_point = {examQuestionDto.points}
+8. If ANY validation fails:
+   regenerate the JSON until all rules pass
+
+9. NEVER return invalid scoring
+
+--------------------------------------------------
 OUTPUT FORMAT (STRICT JSON ONLY)
 
 {{
