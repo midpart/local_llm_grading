@@ -773,25 +773,25 @@ def process_student_answer_files(request):
                 
                     temp_studentAnswer.llm_used_alternative_approach= any(not x.get("is_from_guideline", True) for x in rubric_data.values())
                 
-                ## log 
-                temp_llmLog = LlmLog(
-                    student_name = temp_studentGrade.student_name,
-                    exam_id = exam_obj.id,
-                    question_serial = question_serial,
-                    llm_model = temp_studentAnswer.llm_model,
-                    llm_feedback = temp_studentAnswer.llm_feedback,
-                    llm_start_time = temp_studentAnswer.llm_start_time,
-                    llm_end_time = temp_studentAnswer.llm_end_time,
-                    llm_response_in_sec = temp_studentAnswer.llm_response_in_sec,
-                    llm_response_raw = temp_studentAnswer.llm_response_raw,
-                    llm_input_token = temp_studentAnswer.llm_input_token,
-                    llm_output_tokens = temp_studentAnswer.llm_output_tokens,
-                    llm_response_total_duration_sec = temp_studentAnswer.llm_response_total_duration_sec,
-                    llm_response_prompt_eval_duration_sec = temp_studentAnswer.llm_response_prompt_eval_duration_sec,
-                    llm_response_eval_duration_sec = temp_studentAnswer.llm_response_eval_duration_sec,
-                    llm_context_raw = temp_studentAnswer.llm_context_raw
-                )
-                add_llm_log_db_list.append(temp_llmLog)
+                    ## log 
+                    temp_llmLog = LlmLog(
+                        student_name = temp_studentGrade.student_name,
+                        exam_id = exam_obj.id,
+                        question_serial = question_serial,
+                        llm_model = temp_studentAnswer.llm_model,
+                        llm_feedback = temp_studentAnswer.llm_feedback,
+                        llm_start_time = temp_studentAnswer.llm_start_time,
+                        llm_end_time = temp_studentAnswer.llm_end_time,
+                        llm_response_in_sec = temp_studentAnswer.llm_response_in_sec,
+                        llm_response_raw = temp_studentAnswer.llm_response_raw,
+                        llm_input_token = temp_studentAnswer.llm_input_token,
+                        llm_output_tokens = temp_studentAnswer.llm_output_tokens,
+                        llm_response_total_duration_sec = temp_studentAnswer.llm_response_total_duration_sec,
+                        llm_response_prompt_eval_duration_sec = temp_studentAnswer.llm_response_prompt_eval_duration_sec,
+                        llm_response_eval_duration_sec = temp_studentAnswer.llm_response_eval_duration_sec,
+                        llm_context_raw = temp_studentAnswer.llm_context_raw
+                    )
+                    add_llm_log_db_list.append(temp_llmLog)
                 
                 if temp_studentGrade.total_point is not None:
                     temp_studentGrade.grade = get_grade(temp_studentGrade.total_point)
