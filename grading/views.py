@@ -9,6 +9,8 @@ from grading.models import *
 from grading.examDto import *
 from django.contrib.auth.decorators import login_required
 import time
+from django.utils import timezone
+from datetime import datetime
 import re
 import json
 # Create your views here.
@@ -240,7 +242,7 @@ IMPORTANT:
 
     return context
 
-def get_exam_details_context(examQuestionDto, student_answer):
+def get_exam_details_context_v3(examQuestionDto, student_answer):
     context = ""
 
     grading_guideline = get_grading_guideline(examQuestionDto.grading_guideline, examQuestionDto.points)
@@ -315,9 +317,15 @@ IMPORTANT RULES:
 DYNAMIC RUBRIC RULES
 
 - Rubric entries may be generated dynamically based on:
-    - the grading guideline
+    - the RUBRIC GUIDELINES
     - the question requirements
     - the student's answer
+    - all the rubric item should be in the details and if the student does not touch it set 0 to the score
+
+For every rubric item generated:
+    - score must be between 0 and max which comes from the specific rubric marks by the llm
+    - max must be a positive integer which comes from the specific rubric
+    - score must never exceed max  sode <= max MUST BE  
 
 - If a rubric entry is derived from, aligned with,
   or directly related to the grading guideline categories:
@@ -327,36 +335,15 @@ DYNAMIC RUBRIC RULES
   introduced from the student's answer that is NOT covered
   by the grading guideline:
     - "is_from_guideline": false
+    - then set score 0 as just want to know student use different approach
 
 - Additional rubric entries MUST NOT increase the maximum total score.
 
 - Total rubric score MUST equal student_point.
 
+- Total rubric max MUST equal question_point.
+
 - student_point MUST NEVER exceed {examQuestionDto.points}
-
---------------------------------------------------
-VALIDATION RULES (MUST PASS BEFORE RETURNING)
-
-Before generating the final JSON:
-
-1. Every rubric item must satisfy:
-   0 <= score <= max
-2. Sum all rubric scores:
-   rubric_total = sum(all rubric scores)
-3. Set:
-   student_point = rubric_total
-4. Verify:
-   student_point <= question_point
-5. Verify:
-   rubric_total == student_point
-6. Verify:
-   no rubric item score exceeds its max
-7. Verify:
-   question_point = {examQuestionDto.points}
-8. If ANY validation fails:
-   regenerate the JSON until all rules pass
-
-9. NEVER return invalid scoring
 
 --------------------------------------------------
 OUTPUT FORMAT (STRICT JSON ONLY)
@@ -366,8 +353,8 @@ OUTPUT FORMAT (STRICT JSON ONLY)
 
   "rubric": {{
     "RUBRIC_TITLE": {{
-      "score": number,
-      "max": number,
+      "score": number marks for this RUBRIC,
+      "max": number from the RUBRIC max,
       "is_from_guideline": true
     }}
   }},
@@ -406,6 +393,156 @@ Additional requirements:
 - total rubric score MUST equal student_point
 - student_point MUST NEVER exceed {examQuestionDto.points}
 - Response must be parseable by JSON.parse()
+
+"""
+
+    return context
+
+def get_exam_details_context(examQuestionDto, student_answer):
+    context = ""
+
+    grading_guideline = get_grading_guideline(examQuestionDto.grading_guideline, examQuestionDto.points)
+    if examQuestionDto is not None:
+
+        context = f"""
+You are a STRICT and CONSISTENT grading engine.
+You do NOT behave like a chatbot.
+You ONLY return valid JSON.
+Evaluate the student's answer using the grading guideline and assign scores for each rubric criterion.
+
+"""
+
+        # Additional context
+        if len(examQuestionDto.details) > 0:
+            context += """
+CONTEXT (internal reference only):
+"""
+
+            for detail in examQuestionDto.details:
+                context += f"""
+{detail.title.upper()}
+{detail.details}
+
+"""
+
+        context += f"""
+QUESTION:
+
+{examQuestionDto.question}
+
+REFERENCE ANSWER (internal reference only):
+
+{examQuestionDto.sample_answer}
+
+The reference answer is NOT the only correct answer.
+
+Students may:
+
+use different wording
+use different examples
+use different reasoning paths
+provide alternative valid approaches
+
+Award marks whenever the underlying concepts are correct and relevant.
+
+STUDENT ANSWER:
+
+{student_answer}
+
+--------------------------------------------------
+SCORING RULES (MUST FOLLOW EXACTLY)
+
+1. question_point = {examQuestionDto.points} (fixed)
+2. all rubric criteria should be included
+3. rubric score never exceed max
+4. bonus_points = 0 (always)
+5. feedback must be a short concise string
+6. Be consistent and objective.
+7. Do NOT score based on writing style, grammar, spelling, or answer length.
+8. Evaluate actual understanding, correctness, reasoning, and relevance.
+
+--------------------------------------------------
+RUBRIC GUIDELINES
+
+{grading_guideline}
+
+IMPORTANT RULES:
+
+- The grading guideline is a GUIDE, not a strict answer template.
+- Do NOT depend only on exact wording from the reference answer.
+- Students may use different valid approaches.
+- Students may explain concepts differently.
+- Reward logically correct and meaningful reasoning.
+- Alternative valid thinking should receive fair marks.
+- Penalize only:
+    - factual inaccuracies
+    - contradictions
+    - irrelevant answers
+    - missing understanding
+    - unsupported claims
+
+--------------------------------------------------
+DYNAMIC RUBRIC RULES
+
+- Rubric entries may be generated dynamically based on:
+    - the RUBRIC GUIDELINES
+    - the question requirements
+    - the student's answer
+    - all the rubric item should be in the details and if the student does not touch it set 0 to the score
+
+For every rubric item generated:
+    - score must be between 0 and max which comes from the specific rubric marks by the llm
+    - max must be a positive integer which comes from the specific rubric
+    - score must never exceed max
+
+- If a rubric entry is derived from, aligned with,
+  or directly related to the grading guideline categories:
+    - "is_from_guideline": true
+
+- If a rubric entry represents a NEW evaluation category
+  introduced from the student's answer that is NOT covered
+  by the grading guideline:
+    - "is_from_guideline": false
+    - then set score and max to 0 as just want to know student use different approach
+
+--------------------------------------------------
+OUTPUT FORMAT (STRICT JSON ONLY)
+
+{{
+  "question_point": {examQuestionDto.points},
+
+  "rubric": {{
+    "RUBRIC_TITLE": {{
+      "score": number for this RUBRIC,
+      "max": number from the RUBRIC max,
+      "is_from_guideline": true or false,
+      "feedback": "short feedback string"
+    }}
+  }},
+
+  "student_point": 0,
+  "bonus_points": 0,
+}}
+
+CRITICAL INSTRUCTIONS
+
+You are a JSON generator.
+
+Your entire response MUST be a single valid JSON object.
+
+DO NOT:
+- Write explanations
+- Write notes
+- Write introductions
+- Write conclusions
+- Write markdown
+- Write code fences
+- Write "Here is the JSON"
+- Write any text before {{
+- Write any text after }}
+
+The first character of your response MUST be {{
+The last character of your response MUST be }}
 
 """
 
@@ -522,6 +659,8 @@ def process_student_answer_files(request):
                 add_student_grade_db_list = []
                 update_student_grade_db_list = []
 
+                add_llm_log_db_list = []
+
                 df_file = pd.read_excel(excel_file, sheet_name=0)
                 temp_file_name = excel_file.name
                 fileName = temp_file_name
@@ -560,7 +699,10 @@ def process_student_answer_files(request):
                     temp_studentAnswer.llm_model = llm_model
 
                     start_time = time.time()
-                    #temp_llm_result = request_llm(temp_context, temp_studentAnswer.llm_model)
+                    dt = datetime.fromtimestamp(start_time, tz=timezone.get_current_timezone())
+                    formatted = dt.strftime("%Y-%m-%d %H:%M:%S")
+                    print(f"Start for : {temp_file_name} SL. {question_serial} Time: {formatted}")
+
                     temp_llm_response = request_llm(temp_context, temp_studentAnswer.llm_model)
                     temp_llm_result = temp_llm_response["content"]
 
@@ -580,8 +722,8 @@ def process_student_answer_files(request):
                         continue
                 
                     temp_studentAnswer.llm_context_raw = temp_context
-                    temp_studentAnswer.llm_feedback = temp_data.get("feedback", "")
-                    temp_studentAnswer.llm_score_points = temp_data.get("student_point", 0)
+                    temp_studentAnswer.llm_feedback = ""
+                    temp_studentAnswer.llm_score_points = 0 
                     temp_studentAnswer.llm_input_token= temp_llm_response["input_tokens"]
                     temp_studentAnswer.llm_output_tokens= temp_llm_response["output_tokens"]
                     temp_studentAnswer.llm_response_total_duration_sec= temp_llm_response["total_duration"] / 1_000_000_000
@@ -606,6 +748,14 @@ def process_student_answer_files(request):
 
                         temp_details.score = rubric_value.get("score", 0)
                         temp_details.max_score = rubric_value.get("max", 0)
+                        if temp_details.score > temp_details.max_score:
+                            temp_details.score = temp_details.max_score
+
+                        temp_studentAnswer.llm_score_points +=temp_details.score
+                        tempFeedback = rubric_value.get("feedback", None)
+                        if tempFeedback is not None:
+                            temp_studentAnswer.llm_feedback += " " + temp_details.title + ": " + tempFeedback.rstrip(".") + "."
+
                         temp_details.is_from_guideline = rubric_value.get("is_from_guideline", True)
                         temp_title_list.append(rubric_title)
 
@@ -613,11 +763,36 @@ def process_student_answer_files(request):
                     for remove in temp_remove_student_answer_details_db_list:
                         remove_student_answer_details_db_list.append(remove)
                     temp_studentAnswer.llm_has_response = True
+                    
+                    if temp_studentAnswer.llm_score_points > temp_exam_question_details.points:
+                        temp_studentAnswer.llm_score_points = temp_exam_question_details.points
+                    
                     if temp_studentGrade.total_point is None:
                         temp_studentGrade.total_point = 0
                     temp_studentGrade.total_point +=temp_studentAnswer.llm_score_points
                 
                     temp_studentAnswer.llm_used_alternative_approach= any(not x.get("is_from_guideline", True) for x in rubric_data.values())
+                
+                ## log 
+                temp_llmLog = LlmLog(
+                    student_name = temp_studentGrade.student_name,
+                    exam_id = exam_obj.id,
+                    question_serial = question_serial,
+                    llm_model = temp_studentAnswer.llm_model,
+                    llm_feedback = temp_studentAnswer.llm_feedback,
+                    llm_start_time = temp_studentAnswer.llm_start_time,
+                    llm_end_time = temp_studentAnswer.llm_end_time,
+                    llm_response_in_sec = temp_studentAnswer.llm_response_in_sec,
+                    llm_response_raw = temp_studentAnswer.llm_response_raw,
+                    llm_input_token = temp_studentAnswer.llm_input_token,
+                    llm_output_tokens = temp_studentAnswer.llm_output_tokens,
+                    llm_response_total_duration_sec = temp_studentAnswer.llm_response_total_duration_sec,
+                    llm_response_prompt_eval_duration_sec = temp_studentAnswer.llm_response_prompt_eval_duration_sec,
+                    llm_response_eval_duration_sec = temp_studentAnswer.llm_response_eval_duration_sec,
+                    llm_context_raw = temp_studentAnswer.llm_context_raw
+                )
+                add_llm_log_db_list.append(temp_llmLog)
+                
                 if temp_studentGrade.total_point is not None:
                     temp_studentGrade.grade = get_grade(temp_studentGrade.total_point)
 
@@ -665,6 +840,9 @@ def process_student_answer_files(request):
                                 if x.id is not None
                             ]
                         ).delete()
+                    
+                    if len(add_llm_log_db_list) > 0:
+                        LlmLog.objects.bulk_create(add_llm_log_db_list, batch_size=100)
             
             message = "Operation is successful."
             success = True
