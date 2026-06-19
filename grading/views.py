@@ -495,15 +495,18 @@ For every rubric item generated:
     - max must be a positive integer which comes from the specific rubric
     - score must never exceed max
 
-- If a rubric entry is derived from, aligned with,
-  or directly related to the grading guideline categories:
-    - "is_from_guideline": true
+is_from_guideline refers ONLY to the rubric category itself.
 
-- If a rubric entry represents a NEW evaluation category
-  introduced from the student's answer that is NOT covered
-  by the grading guideline:
-    - "is_from_guideline": false
-    - then set score and max to 0 as just want to know student use different approach
+Set:
+- true = the rubric category exists in the provided RUBRIC AREAS.
+- false = the rubric category was newly created by you and does not exist in the provided RUBRIC AREAS.
+
+IMPORTANT:
+A student may use alternative frameworks, theories, models, or reasoning.
+This does NOT change is_from_guideline.
+
+If the rubric title exists in RUBRIC AREAS,
+is_from_guideline MUST be true.
 
 --------------------------------------------------
 OUTPUT FORMAT (STRICT JSON ONLY)
