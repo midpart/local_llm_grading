@@ -33,6 +33,7 @@ def get_exam_question_dto(exam_obj, exam_details, exam_questions):
             question = exam_question.question,
             sample_answer = exam_question.sample_answer,
             grading_guideline = exam_question.grading_guideline,
+            rubric_titles = exam_question.rubric_titles,
             details = []
         )
         for exam_detail in exam_details:
@@ -736,6 +737,9 @@ def process_student_answer_files(request):
                     rubric_data = temp_data.get("rubric", {})
                     temp_studentAnswerDetails = all_db_student_answer_details.filter(student_answer__id=temp_studentAnswer.id) if all_db_student_answer_details is not None else None
                     temp_title_list = []
+                    temp_db_rubric_title = []
+                    if temp_exam_question_details.rubric_titles is not None and len(temp_exam_question_details.rubric_titles):
+                        temp_db_rubric_title = [item.strip().lower() for item in temp_exam_question_details.rubric_titles.split(",")]
                     print(f'detailsdb Items {len(temp_studentAnswerDetails)}')
                     for rubric_title, rubric_value in rubric_data.items():    
                         temp_details = temp_studentAnswerDetails.filter(title=rubric_title).first() if temp_studentAnswerDetails is not None else None
@@ -753,6 +757,7 @@ def process_student_answer_files(request):
                         temp_details.max_score = rubric_value.get("max", 0)
                         if temp_details.score > temp_details.max_score:
                             temp_details.score = temp_details.max_score
+                            temp_studentAnswer.llm_fix_rubric_points = True
 
                         temp_studentAnswer.llm_score_points +=temp_details.score
                         tempFeedback = rubric_value.get("feedback", None)
@@ -760,6 +765,10 @@ def process_student_answer_files(request):
                             temp_studentAnswer.llm_feedback += " " + temp_details.title + ": " + tempFeedback.rstrip(".") + "."
 
                         temp_details.is_from_guideline = rubric_value.get("is_from_guideline", True)
+                        if temp_details.is_from_guideline == False and len(temp_db_rubric_title) > 0 and temp_details.title.lower().strip() in temp_db_rubric_title:
+                            temp_details.is_from_guideline = False
+                            temp_studentAnswer.llm_fix_rubric_status = True
+
                         temp_title_list.append(rubric_title)
 
                     temp_remove_student_answer_details_db_list = temp_studentAnswerDetails.exclude(title__in=temp_title_list) if temp_studentAnswerDetails is not None else []
@@ -769,6 +778,7 @@ def process_student_answer_files(request):
                     
                     if temp_studentAnswer.llm_score_points > temp_exam_question_details.points:
                         temp_studentAnswer.llm_score_points = temp_exam_question_details.points
+                        temp_studentAnswer.llm_fix_score_points = True
                     
                     if temp_studentGrade.total_point is None:
                         temp_studentGrade.total_point = 0
@@ -792,7 +802,10 @@ def process_student_answer_files(request):
                         llm_response_total_duration_sec = temp_studentAnswer.llm_response_total_duration_sec,
                         llm_response_prompt_eval_duration_sec = temp_studentAnswer.llm_response_prompt_eval_duration_sec,
                         llm_response_eval_duration_sec = temp_studentAnswer.llm_response_eval_duration_sec,
-                        llm_context_raw = temp_studentAnswer.llm_context_raw
+                        llm_context_raw = temp_studentAnswer.llm_context_raw,
+                        llm_fix_score_points = temp_studentAnswer.llm_fix_score_points,
+                        llm_fix_rubric_status = temp_studentAnswer.llm_fix_rubric_status,
+                        llm_fix_rubric_points = temp_studentAnswer.llm_fix_rubric_points
                     )
                     add_llm_log_db_list.append(temp_llmLog)
                 

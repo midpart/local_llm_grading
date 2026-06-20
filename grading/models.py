@@ -23,6 +23,9 @@ class StudentAnswer(models.Model):
     llm_response_prompt_eval_duration_sec = models.FloatField(null=True)
     llm_response_eval_duration_sec = models.FloatField(null=True)
     llm_context_raw =  models.TextField(null=True)
+    llm_fix_score_points =  models.BooleanField(null=True)
+    llm_fix_rubric_status =  models.BooleanField(null=True)
+    llm_fix_rubric_points =  models.BooleanField(null=True)
 
     def __str__(self):
         return f"{self.student_name} - {self.question_serial}"
@@ -76,6 +79,9 @@ class LlmLog(models.Model):
     llm_response_prompt_eval_duration_sec = models.FloatField(null=True)
     llm_response_eval_duration_sec = models.FloatField(null=True)
     llm_context_raw =  models.TextField(null=True)
+    llm_fix_score_points =  models.BooleanField(null=True)
+    llm_fix_rubric_status =  models.BooleanField(null=True)
+    llm_fix_rubric_points =  models.BooleanField(null=True)
 
     def __str__(self):
         return f"{self.llm_model} - {self.question_serial}"

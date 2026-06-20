@@ -14,6 +14,7 @@ class ExamQuestionDTO:
     question: str
     sample_answer: str
     grading_guideline: str
+    rubric_titles: str
 
     details: List[ExamDetailsDTO] = field(default_factory=list)
 

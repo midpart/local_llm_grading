@@ -24,7 +24,7 @@ class SystemSettings(admin.ModelAdmin):
 
 @admin.register(StudentAnswer)
 class SystemSettings(admin.ModelAdmin):
-    list_display = ('id', 'exam__name', 'student_name', 'question_serial', 'llm_model', 'llm_score_points', 'llm_used_alternative_approach', 'llm_has_response', 'llm_response_in_sec')  
+    list_display = ('id', 'exam__name', 'student_name', 'question_serial', 'llm_model', 'llm_score_points', 'llm_used_alternative_approach', 'llm_has_response', 'llm_response_in_sec', 'llm_fix_score_points', 'llm_fix_rubric_status', 'llm_fix_rubric_points')  
     #list_per_page = settings.PER_PAGE
     list_filter = ('exam__name', 'student_name', 'question_serial',)
 
@@ -55,7 +55,7 @@ class SystemSettings(admin.ModelAdmin):
     
 @admin.register(LlmLog)
 class SystemSettings(admin.ModelAdmin):
-    list_display = ('id', 'student_name', 'exam_id', 'question_serial', 'creation_date_time', 'llm_model', 'llm_response_in_sec', 'llm_response_total_duration_sec')  
+    list_display = ('id', 'student_name', 'exam_id', 'question_serial', 'creation_date_time', 'llm_model', 'llm_response_in_sec', 'llm_response_total_duration_sec', 'llm_fix_score_points', 'llm_fix_rubric_status', 'llm_fix_rubric_points')  
     #list_per_page = settings.PER_PAGE
     list_filter = ('exam_id', 'student_name', 'question_serial',)
 

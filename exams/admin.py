@@ -19,5 +19,5 @@ class SystemSettings(admin.ModelAdmin):
 #admin.site.register(ExamQuestionAnswer)
 @admin.register(ExamQuestionAnswer)
 class SystemSettings(admin.ModelAdmin):
-    list_display = ('id', 'exam__name', 'question_serial', 'points')  
+    list_display = ('id', 'exam__name', 'question_serial', 'points', 'rubric_titles')  
     list_filter = ('exam__name', 'question_serial',)

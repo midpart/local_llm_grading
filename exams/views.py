@@ -112,7 +112,12 @@ def process_exam_file(request):
                 temp_question.points = row["points"]
                 temp_question.question = row["question"]
                 temp_question.sample_answer = row["sample_answer"]
-                temp_question.grading_guideline = row["grading_guideline"] 
+                temp_question.grading_guideline = row["grading_guideline"]
+                temp_question.rubric_titles = "" 
+                if "rubric_titles" in df_questions.columns:
+                    rubric_titles = row["rubric_titles"]
+                    if rubric_titles is not None and len(rubric_titles) > 0:
+                        temp_question.rubric_titles = ",".join(item.strip().lower() for item in rubric_titles.split(","))
 
                 if is_new_question:
                     add_question_db_list.append(temp_question)
@@ -143,6 +148,7 @@ def process_exam_file(request):
                                                           , "question"
                                                           , "sample_answer"
                                                           , "grading_guideline"
+                                                          , "rubric_titles"
                                                           ], batch_size=100)
                 if len(remove_question_db_list) > 0:
                     remove_question_db_list.delete()
