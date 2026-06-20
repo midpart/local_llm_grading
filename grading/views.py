@@ -843,6 +843,9 @@ def process_student_answer_files(request):
                                                                 , "llm_response_prompt_eval_duration_sec"
                                                                 , "llm_response_eval_duration_sec"
                                                                 , "llm_context_raw"
+                                                                , "llm_fix_score_points"
+                                                                , "llm_fix_rubric_status"
+                                                                , "llm_fix_rubric_points"
                                                                 ], batch_size=100)
 
                     if len(add_student_answer_details_db_list) > 0:
