@@ -767,7 +767,7 @@ def process_student_answer_files(request):
 
                         temp_details.is_from_guideline = rubric_value.get("is_from_guideline", True)
                         if temp_details.is_from_guideline == False and len(temp_db_rubric_title) > 0 and temp_details.title.lower().strip() in temp_db_rubric_title:
-                            temp_details.is_from_guideline = False
+                            temp_details.is_from_guideline = True
                             temp_studentAnswer.llm_fix_rubric_status = True
 
                         if temp_details.is_from_guideline == False: 
