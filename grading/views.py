@@ -741,6 +741,7 @@ def process_student_answer_files(request):
                     if temp_exam_question_details.rubric_titles is not None and len(temp_exam_question_details.rubric_titles):
                         temp_db_rubric_title = [item.strip().lower() for item in temp_exam_question_details.rubric_titles.split(",")]
                     print(f'detailsdb Items {len(temp_studentAnswerDetails)}')
+                    llm_used_alternative_approach = False
                     for rubric_title, rubric_value in rubric_data.items():    
                         temp_details = temp_studentAnswerDetails.filter(title=rubric_title).first() if temp_studentAnswerDetails is not None else None
                         if temp_details is None:
@@ -769,6 +770,9 @@ def process_student_answer_files(request):
                             temp_details.is_from_guideline = False
                             temp_studentAnswer.llm_fix_rubric_status = True
 
+                        if temp_details.is_from_guideline == False: 
+                            llm_used_alternative_approach = True
+                        
                         temp_title_list.append(rubric_title)
 
                     temp_remove_student_answer_details_db_list = temp_studentAnswerDetails.exclude(title__in=temp_title_list) if temp_studentAnswerDetails is not None else []
@@ -784,7 +788,7 @@ def process_student_answer_files(request):
                         temp_studentGrade.total_point = 0
                     temp_studentGrade.total_point +=temp_studentAnswer.llm_score_points
                 
-                    temp_studentAnswer.llm_used_alternative_approach= any(not x.get("is_from_guideline", True) for x in rubric_data.values())
+                    temp_studentAnswer.llm_used_alternative_approach= llm_used_alternative_approach#any(not x.get("is_from_guideline", True) for x in rubric_data.values())
                 
                     ## log 
                     temp_llmLog = LlmLog(
