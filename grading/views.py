@@ -754,6 +754,9 @@ def process_student_answer_files(request):
                         else: 
                             update_student_answer_details_db_list.append(temp_details)
 
+                        temp_studentAnswer.llm_fix_score_points = False
+                        temp_studentAnswer.llm_fix_rubric_points = False
+                        temp_studentAnswer.llm_fix_rubric_status = False
                         temp_details.score = rubric_value.get("score", 0)
                         temp_details.max_score = rubric_value.get("max", 0)
                         if temp_details.score > temp_details.max_score:
