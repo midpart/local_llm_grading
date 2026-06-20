@@ -812,7 +812,8 @@ def process_student_answer_files(request):
                         llm_context_raw = temp_studentAnswer.llm_context_raw,
                         llm_fix_score_points = temp_studentAnswer.llm_fix_score_points,
                         llm_fix_rubric_status = temp_studentAnswer.llm_fix_rubric_status,
-                        llm_fix_rubric_points = temp_studentAnswer.llm_fix_rubric_points
+                        llm_fix_rubric_points = temp_studentAnswer.llm_fix_rubric_points,
+                        llm_score_points = temp_studentAnswer.llm_score_points,
                     )
                     add_llm_log_db_list.append(temp_llmLog)
                 

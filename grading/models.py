@@ -82,6 +82,7 @@ class LlmLog(models.Model):
     llm_fix_score_points =  models.BooleanField(null=True)
     llm_fix_rubric_status =  models.BooleanField(null=True)
     llm_fix_rubric_points =  models.BooleanField(null=True)
+    llm_score_points =  models.FloatField(null=True)
 
     def __str__(self):
         return f"{self.llm_model} - {self.question_serial}"
