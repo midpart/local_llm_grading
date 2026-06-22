@@ -93,6 +93,10 @@ def student_grade_report_xlx(request):
             header_array.append(f"Q-{question.question_serial}_llm_response_total_duration_sec")
             header_array.append(f"Q-{question.question_serial}_llm_response_prompt_eval_duration_sec")
             header_array.append(f"Q-{question.question_serial}_llm_response_eval_duration_sec")
+            header_array.append(f"Q-{question.question_serial}_llm_fix_score_points")
+            header_array.append(f"Q-{question.question_serial}_llm_fix_rubric_status")
+            header_array.append(f"Q-{question.question_serial}_llm_fix_rubric_points")
+            header_array.append(f"Q-{question.question_serial}_llm_score_points")
         ws.append(header_array) 
 
         # Add data
@@ -124,7 +128,7 @@ def student_grade_report_xlx(request):
                 if temp_answer_list is not None:
                     temp_answer = temp_answer_list.filter(question_serial = question.question_serial).first()
                 if temp_answer is None:
-                    data_rows.extend([None, get_true_false(False), None, None, None, None, None, None, None, None, None, None, None, None])
+                    data_rows.extend([None, get_true_false(False), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
                 else:
                     details = ""
                     temp_details = student_answer_details_list.filter(student_answer_id = temp_answer.id)
@@ -136,7 +140,9 @@ def student_grade_report_xlx(request):
                                           temp_answer.llm_response_in_sec, temp_answer.llm_response_in_sec / 60, temp_answer.llm_input_token, 
                                           temp_answer.llm_output_tokens, (temp_answer.llm_input_token + temp_answer.llm_output_tokens), 
                                           temp_answer.llm_response_total_duration_sec, temp_answer.llm_response_prompt_eval_duration_sec, 
-                                          temp_answer.llm_response_eval_duration_sec])
+                                          temp_answer.llm_response_eval_duration_sec, get_true_false(temp_answer.llm_fix_score_points)
+                                          , get_true_false(temp_answer.llm_fix_rubric_status), get_true_false(temp_answer.llm_fix_rubric_points)
+                                          , get_true_false(temp_answer.llm_score_points)])
             
             print(f"Total Colum: {len(data_rows)}")
             ws.append(data_rows)
