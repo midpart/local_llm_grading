@@ -757,11 +757,15 @@ def process_student_answer_files(request):
                         temp_studentAnswer.llm_fix_score_points = False
                         temp_studentAnswer.llm_fix_rubric_points = False
                         temp_studentAnswer.llm_fix_rubric_status = False
+                        
+                        temp_details.is_fix_llm_score = False
                         temp_details.score = rubric_value.get("score", 0)
+                        temp_details.llm_score = rubric_value.get("score", 0)
                         temp_details.max_score = rubric_value.get("max", 0)
                         if temp_details.score > temp_details.max_score:
                             temp_details.score = temp_details.max_score
                             temp_studentAnswer.llm_fix_rubric_points = True
+                            temp_details.is_fix_llm_score = True
 
                         temp_studentAnswer.llm_score_points +=temp_details.score
                         tempFeedback = rubric_value.get("feedback", None)
@@ -857,6 +861,8 @@ def process_student_answer_files(request):
                     if len(update_student_answer_details_db_list) > 0:
                         StudentAnswerDetails.objects.bulk_update(update_student_answer_details_db_list, ["score"
                                                                 , "max_score"
+                                                                , "llm_score"
+                                                                , "is_fix_llm_score"
                                                                 , "is_from_guideline"
                                                                 ], batch_size=100)
                     if len(remove_student_answer_details_db_list) > 0:

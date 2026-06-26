@@ -134,7 +134,7 @@ def student_grade_report_xlx(request):
                     temp_details = student_answer_details_list.filter(student_answer_id = temp_answer.id)
                     if temp_details is not None:
                         for temp_detail in temp_details:
-                            details += f"title: {temp_detail.title}, score: {temp_detail.score}, max_score: {temp_detail.max_score}, is_from_guideline: {get_true_false(temp_detail.is_from_guideline)} \n"
+                            details += f"title: {temp_detail.title}, llm_score: {temp_detail.llm_score}, score: {temp_detail.score}, max_score: {temp_detail.max_score}, is_fix_llm_score: {get_true_false(temp_detail.is_fix_llm_score)}, is_from_guideline: {get_true_false(temp_detail.is_from_guideline)} \n"
                     data_rows.extend([temp_answer.answer, get_true_false(temp_answer.llm_has_response), temp_answer.llm_score_points,
                                           details, get_true_false(temp_answer.llm_used_alternative_approach), temp_answer.llm_feedback, 
                                           temp_answer.llm_response_in_sec, temp_answer.llm_response_in_sec / 60, temp_answer.llm_input_token, 

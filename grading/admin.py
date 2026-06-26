@@ -40,7 +40,7 @@ class SystemSettings(admin.ModelAdmin):
 
 @admin.register(StudentAnswerDetails)
 class SystemSettings(admin.ModelAdmin):
-    list_display = ('id', 'exam__name', 'student_answer__student_name', 'student_answer__question_serial', 'title', 'score', 'max_score', 'is_from_guideline')  
+    list_display = ('id', 'exam__name', 'student_answer__student_name', 'student_answer__question_serial', 'title', 'score', 'llm_score', 'max_score', 'is_fix_llm_score', 'is_from_guideline')  
     #list_per_page = settings.PER_PAGE
     list_filter = ('exam__name', 'student_answer__student_name', 'student_answer__question_serial',)
 

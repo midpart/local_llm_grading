@@ -39,8 +39,10 @@ class StudentAnswerDetails(models.Model):
 
     title = models.CharField(max_length=600)
     score = models.FloatField(null=False)
+    llm_score = models.FloatField(null=False, default=0)
     max_score = models.FloatField(null=False)
     is_from_guideline = models.BooleanField(default=True)
+    is_fix_llm_score = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.title} - {self.score}"
